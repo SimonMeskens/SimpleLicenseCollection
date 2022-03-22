@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Simple License Generator</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Oswald:wght@200&family=Quicksand:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      body {
+        padding-inline: 4rem;
+        line-height: 1.4rem;
+        font-family: Quicksand, sans-serif;
+      }
+
+      h1,
+      h2 {
+        font-family: Oswald, sans-serif;
+        text-transform: uppercase;
+        color: rgb(221, 52, 0);
+      }
+
+      main {
+        display: flex;
+        flex-direction: row;
+        margin-inline-start: 2rem;
+      }
+
+      fieldset p {
+        display: flex;
+        flex-direction: row;
+      }
+
+      fieldset label,
+      fieldset select {
+        display: inline-block;
+        width: 10em;
+      }
+
+      fieldset input {
+        display: inline-block;
+        width: 15em;
+      }
+
+      article {
+        flex-basis: 1;
+        width: 60ch;
+        border: 1px solid #999;
+        background-color: #eee;
+        padding: 1rem 4rem;
+        margin-inline-start: 2rem;
+      }
+
+      .copyright-notice {
+        font-weight: 600;
+      }
+
+      .copyright,
+      .relicense,
+      .permission,
+      .attribution,
+      .patent,
+      .disclaimer,
+      .equivalent-license {
+        display: none;
+      }
+
+      .license {
+        display: none;
+      }
+    </style>
+
+    <script type="module">
+      document.getElementById("year-input").value = new Date().getFullYear();
+
+      const notEmpty = (string, fallback) =>
+        typeof string === "string" && string.length > 0 ? string : fallback;
+
+      const fillSlot = (name, value) =>
+        document
+          .querySelectorAll(`slot[name="${name}"]`)
+          .forEach((slot) => (slot.textContent = value));
+
+      const form = Object.assign(
+        (name) => form[name]?.value,
+        Object.fromEntries(
+          [
+            "contributors-input",
+            "year-input",
+            "work-select",
+            "copyright-select",
+            "relicense-select",
+            "permission-select",
+            "attribution-select",
+            "patent-select",
+            "disclaimer-select",
+          ].map((id) => [id, document.getElementById(id)])
+        )
+      );
+
+      const get = (name) => document.querySelector(`.${name}, #${name}`);
+      const hide = (name) => {
+        const element = typeof name === "string" ? get(name) : name;
+        if (element) element.style.removeProperty("display");
+        return element;
+      };
+      const show = (name) => {
+        const element = typeof name === "string" ? get(name) : name;
+        if (element) element.style.display = "revert";
+        return element;
+      };
+
+      let licenseType = "free-license";
+      const license = {};
+
+      const update = () => {
+        fillSlot("year", notEmpty(form["year-input"].value, "«YEAR»"));
+        fillSlot(
+          "contributors",
+          notEmpty(form["contributors-input"].value, "«AUTHORS»")
+        );
+        fillSlot("work", notEmpty(form["work-select"].value, "work"));
+        fillSlot(
+          "work-uppercase",
+          notEmpty(form["work-select"].value.toUpperCase(), "WORK")
+        );
+
+        const copyright = form("copyright-select");
+        hide(license.copyright);
+        if (copyright === "minimal") hide("copyright-symbol");
+        else {
+          show("copyright-symbol");
+          license.copyright = show(copyright);
+        }
+
+        const relicense = form("relicense-select");
+        if (relicense === "yes") show("relicense");
+        else hide("relicense");
+
+        const permission = form("permission-select");
+        hide(license.permission);
+        license.permission = show(permission);
+
+        const attribution = form("attribution-select");
+        hide(license.attribution);
+        if (attribution === "none") hide("copyright-notice");
+        else {
+          show("copyright-notice");
+          license.attribution = show(attribution);
+        }
+
+        const patent = form("patent-select");
+        if (patent === "yes") show("patent");
+        else hide("patent");
+
+        const disclaimer = form("disclaimer-select");
+        hide(license.disclaimer);
+        license.disclaimer = show(disclaimer);
+
+        document
+          .querySelectorAll(".license")
+          .forEach((el) => el.style.removeProperty("display"));
+
+        if (
+          copyright !== "public-domain" &&
+          relicense !== "yes" &&
+          attribution !== "none" &&
+          patent === "no"
+        ) {
+          licenseType = "free-license";
+        } else if (
+          copyright !== "public-domain" &&
+          relicense !== "yes" &&
+          attribution !== "none" &&
+          patent === "yes"
+        ) {
+          licenseType = "patent-grant-license";
+        } else if (
+          copyright === "public-domain" &&
+          relicense !== "yes" &&
+          attribution !== "none" &&
+          patent === "no"
+        ) {
+          licenseType = "public-domain-license";
+        } else if (
+          copyright !== "public-domain" &&
+          relicense !== "yes" &&
+          attribution === "none" &&
+          patent === "no"
+        ) {
+          licenseType = "no-attribution-license";
+        } else licenseType = "none";
+
+        if (licenseType !== "none") {
+          document
+            .querySelectorAll("." + licenseType)
+            .forEach((el) => (el.style.display = "block"));
+          show("equivalent-license");
+        } else hide("equivalent-license");
+      };
+
+      update();
+      document.querySelector("form").addEventListener("change", update);
+    </script>
+  </head>
+  <body>
+    <h1>Create your own simple license</h1>
+
+    <main>
+      <form>
+        <fieldset>
+          <p>
+            <label for="contributors-input">Copyright holders: </label>
+            <input
+              type="text"
+              name="contributors"
+              id="contributors-input"
+              placeholder="John Doe, Jane Smith"
+              required
+            />
+          </p>
+          <p>
+            <label for="year-input">Year: </label>
+            <input
+              type="text"
+              name="year"
+              id="year-input"
+              placeholder="YYYY"
+              required
+            />
+          </p>
+          <p>
+            <label for="work-select">Type of work: </label>
+            <select name="work" id="work-select">
+              <option value="work">Work</option>
+              <option value="file">File</option>
+              <option value="software">Software</option>
+              <option value="project">Project</option>
+            </select>
+          </p>
+          <p>
+            <label for="copyright-select">Copyright notice: </label>
+            <select name="copyright" id="copyright-select">
+              <option value="minimal">Minimal</option>
+              <option value="rights-reserved">All rights reserved</option>
+              <option value="public-domain">Public Domain</option>
+            </select>
+          </p>
+          <p>
+            <label for="relicense-select">Re-license clause: </label>
+            <select name="relicense" id="relicense-select">
+              <option value="no">No</option>
+              <option value="yes">Yes</option>
+            </select>
+          </p>
+          <p>
+            <label for="permission-select">Permission clause: </label>
+            <select name="permission" id="permission-select">
+              <option value="simple-permission">Simple</option>
+              <option value="negative-restriction">Negative restriction</option>
+            </select>
+          </p>
+          <p>
+            <label for="attribution-select">Attribution clause: </label>
+            <select name="attribution" id="attribution-select">
+              <option value="simple-attribution">Simple</option>
+              <option value="minimal-attribution">Minimal</option>
+              <option value="none">None</option>
+            </select>
+          </p>
+          <p>
+            <label for="patent-select">Patent grant: </label>
+            <select name="patent" id="patent-select">
+              <option value="no">No</option>
+              <option value="yes">Yes</option>
+            </select>
+          </p>
+          <p>
+            <label for="disclaimer-select">Disclaimer clause: </label>
+            <select name="disclaimer" id="disclaimer-select">
+              <option value="minimal-disclaimer">Minimal</option>
+              <option value="simple-disclaimer">Simple</option>
+              <option value="full-disclaimer">Full</option>
+            </select>
+          </p>
+          <p>
+            <label class="equivalent-license">Equivalent license: </label>
+            <span>
+              <a
+                href="https://opensource.org/licenses/ISC"
+                class="license free-license"
+              >
+                ISC License
+              </a>
+              <a
+                href="https://opensource.org/licenses/MIT"
+                class="license free-license"
+              >
+                MIT License
+              </a>
+              <a
+                href="https://opensource.org/licenses/BSD-2-Clause"
+                class="license free-license"
+              >
+                Simplified BSD License
+              </a>
+              <a
+                href="https://opensource.org/licenses/0BSD"
+                class="license no-attribution-license"
+              >
+                Zero-clause BSD
+              </a>
+              <a
+                href="https://opensource.org/licenses/0BSD"
+                class="license no-attribution-license"
+              >
+                MIT No Attribution License
+              </a>
+              <a
+                href="https://creativecommons.org/publicdomain/zero/1.0/"
+                class="license public-domain-license"
+              >
+                CC0 License
+              </a>
+              <a
+                href="https://opensource.org/licenses/unlicense"
+                class="license public-domain-license"
+              >
+                The Unlicense
+              </a>
+              <a
+                href="https://opensource.org/licenses/BSDplusPatent"
+                class="license patent-grant-license"
+              >
+                BSD+Patent
+              </a>
+              <a
+                href="https://opensource.org/licenses/Apache-2.0"
+                class="license patent-grant-license"
+              >
+                Apache License 2.0
+              </a>
+            </span>
+          </p>
+        </fieldset>
+      </form>
+
+      <article>
+        <p class="copyright copyright-notice">
+          Copyright <span class="copyright" id="copyright-symbol">(c)</span>
+          <slot name="year">«YEAR»</slot>
+          <slot name="contributors">«AUTHORS»</slot>
+        </p>
+        <p class="copyright rights-reserved">All rights reserved</p>
+        <p class="copyright public-domain">
+          To the extent permitted under applicable law, worldwide, all copyright
+          holders fully waive their copyrights to this
+          <slot name="work">work</slot> and dedicate it to the public domain.
+        </p>
+        <p class="relicense">
+          You are allowed to re-license copies or modified copies of this work
+          under any other license, as long as it doesn't restrict permissions
+          granted by this license.
+        </p>
+        <p>
+          <span class="permission simple-permission">
+            Permission to use, copy, modify, and/or distribute this
+            <slot name="work">work</slot> for any purpose with or without fee is
+            hereby granted</span
+          ><span class="permission negative-restriction">
+            You may do anything with this
+            <slot name="work">work</slot> that copyright law would normally
+            restrict</span
+          ><span class="attribution minimal-attribution"
+            >, provided this license is preserved.</span
+          ><span class="attribution simple-attribution"
+            >, provided that the above copyright notice and this permission
+            notice appear in all copies.</span
+          ><span class="attribution no-attribution">.</span>
+          <span class="disclaimer minimal-disclaimer">
+            This <slot name="work">work</slot> is offered as-is, without any
+            warranty.
+          </span>
+        </p>
+        <p class="patent">
+          Any patents held by a contributor to this work, where they pertain to
+          this work, are subject to a royalty-free grant of license for purposes
+          of this work.
+        </p>
+        <p class="disclaimer simple-disclaimer">
+          This copy of the <slot name="work">work</slot> and all other copies in
+          whole or part, unless required by applicable law or agreed to in
+          writing, are distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+          CONDITIONS OF ANY KIND, either express or implied.
+        </p>
+        <p class="disclaimer full-disclaimer">
+          THIS <slot name="work-uppercase">WORK</slot> IS PROVIDED "AS IS",
+          WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
+          LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+          PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+          COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+          WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT
+          OF OR IN CONNECTION WITH THE
+          <slot name="work-uppercase">WORK</slot> OR THE USE OR OTHER DEALINGS
+          IN THE <slot name="work-uppercase">WORK</slot>.
+        </p>
+      </article>
+    </main>
+  </body>
+</html>

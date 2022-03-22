@@ -1,0 +1,1 @@
+This copy of the work and all other copies in whole or part, unless required by applicable law or agreed to in writing, are distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
