@@ -2,6 +2,8 @@
 
 This repository contains a number of small license snippets that can be combined to form very compact licenses.
 
+It also contains a [license generator](https://simonmeskens.github.io/SimpleLicenseCollection/) that lets you select which snippets to combine, as well as telling you what the license is equivalent to.
+
 ## Example
 
 ```
